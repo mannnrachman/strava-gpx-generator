@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Strava GPX Generator</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="./gpx-logo.png" />
+    <link rel="shortcut icon" href="./gpx-logo.png" />
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- jQuery (required for Select2) -->
+    <script
+      src="https://code.jquery.com/jquery-3.7.1.min.js"
+      integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
+      crossorigin="anonymous"
+    ></script>
+
+    <!-- Select2 CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css"
+      rel="stylesheet"
+    />
+
+    <!-- Select2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+  </head>
+  <body class="antialiased text-gray-800" x-data="app" x-init="init()">
+    <!-- Alert System -->
+    <div
+      id="customAlert"
+      class="custom-alert"
+      :class="{ 'show': $store.app.alert.show }"
+      x-text="$store.app.alert.message"
+    ></div>
+
+    <div class="page-container">
+      <!-- Header -->
+      <header class="mb-8">
+        <!-- Mobile Layout -->
+        <div class="mobile-header">
+          <!-- Logo and Theme Button Row -->
+          <div class="mobile-header-row">
+            <img src="./gpx-logo.png" alt="GPX Logo" class="logo logo-mobile" />
+            <button @click="$store.app.toggleTheme()" class="btn-theme">
+              <span
+                x-html='$store.app.isDarkMode ? 
+                        &apos;<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="icon-sm"><path d="M12 4a1 1 0 011 1v2a1 1 0 11-2 0V5a1 1 0 011-1zm0 12a4 4 0 100-8 4 4 0 000 8zm8-5a1 1 0 110 2h-2a1 1 0 110-2h2zM6 11a1 1 0 110 2H4a1 1 0 110-2h2z"/></svg>&apos; : 
+                        &apos;<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="icon-sm"><path d="M21 12.79A9 9 0 1111.21 3a7 7 0 109.79 9.79z"/></svg>&apos;'
+              >
+              </span>
+              <span x-text="$store.app.isDarkMode ? 'Light' : 'Dark'"></span>
+            </button>
+          </div>
+          <!-- Title and Description -->
+          <div class="mobile-title-section">
+            <h1 class="page-title page-title-mobile">Strava GPX Generator</h1>
+            <p class="page-description text-sm">
+              Draw your route, design your stats, and generate a GPX file for
+              Strava.
+            </p>
+          </div>
+        </div>
+
+        <!-- Desktop Layout -->
+        <div class="desktop-header">
+          <div class="desktop-logo-section">
+            <img
+              src="./gpx-logo.png"
+              alt="GPX Logo"
+              class="logo logo-desktop"
+            />
+            <div>
+              <h1 class="page-title page-title-desktop">
+                Strava GPX Generator
+              </h1>
+              <p class="page-description">
+                Draw your route, design your stats, and generate a GPX file for
+                Strava.
+              </p>
+            </div>
+          </div>
+          <div class="desktop-controls">
+            <button @click="$store.app.toggleTheme()" class="btn-theme">
+              <span
+                x-html='$store.app.isDarkMode ? 
+                        &apos;<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="icon-sm"><path d="M12 4a1 1 0 011 1v2a1 1 0 11-2 0V5a1 1 0 011-1zm0 12a4 4 0 100-8 4 4 0 000 8zm8-5a1 1 0 110 2h-2a1 1 0 110-2h2zM6 11a1 1 0 110 2H4a1 1 0 110-2h2z"/></svg>&apos; : 
+                        &apos;<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="icon-sm"><path d="M21 12.79A9 9 0 1111.21 3a7 7 0 109.79 9.79z"/></svg>&apos;'
+              >
+              </span>
+              <span x-text="$store.app.isDarkMode ? 'Light' : 'Dark'"></span>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <main class="main-content">
+        <div class="content-grid">
+          <!-- Left Column: Map and Route Drawing -->
+          <div class="section-column" x-data="mapComponent" x-init="init()">
+            <h2 class="section-header">
+              <span class="section-icon section-icon-blue">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                  class="icon-md"
+                >
+                  <path
+                    d="M12 2a7 7 0 00-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 00-7-7zm0 9.5a2.5 2.5 0 110-5 2.5 2.5 0 010 5z"
+                  />
+                </svg>
+              </span>
+              1. Draw your running route on the map
+            </h2>
+
+            <!-- Location Selector Dropdowns -->
+            <div
+              class="location-selector"
+              x-data="locationSelector"
+              x-init="init()"
+            >
+              <div class="location-dropdown-grid">
+                <div class="dropdown-item">
+                  <label for="countrySelect" class="form-label">Country</label>
+                  <select
+                    id="countrySelect"
+                    class="form-select location-select"
+                  >
+                    <option value="">Select Country</option>
+                  </select>
+                </div>
+
+                <div class="dropdown-item">
+                  <label for="stateSelect" class="form-label"
+                    >Province/State</label
+                  >
+                  <select id="stateSelect" class="form-select location-select">
+                    <option value="">Select Province/State</option>
+                  </select>
+                </div>
+
+                <div class="dropdown-item">
+                  <label for="citySelect" class="form-label">City</label>
+                  <select id="citySelect" class="form-select location-select">
+                    <option value="">Select City</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Search fallback -->
+              <div
+                class="search-fallback"
+                x-show="!selectedCountry && !selectedState && !selectedCity"
+              >
+                <div class="search-container">
+                  <span class="input-icon">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                      class="icon-md"
+                    >
+                      <path
+                        d="M21 20l-5.2-5.2a7 7 0 10-1.4 1.4L20 21l1-1zM5 10a5 5 0 1110 0A5 5 0 015 10z"
+                      />
+                    </svg>
+                  </span>
+                  <input
+                    type="text"
+                    x-model="$store.app.searchQuery"
+                    @keydown.enter="$event.target.blur(); performSearch($store.app.searchQuery)"
+                    placeholder="Or search for a location manually"
+                    class="search-input"
+                  />
+
+                  <!-- Search Results -->
+                  <div
+                    x-show="$store.app.showSearchResults"
+                    class="search-results"
+                  >
+                    <template
+                      x-for="place in $store.app.searchResults"
+                      :key="place.place_id"
+                    >
+                      <div
+                        @click="selectSearchResult(place)"
+                        class="search-result-item"
+                        x-text="place.display_name"
+                      ></div>
+                    </template>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Map -->
+            <div id="map" class="map-container"></div>
+
+            <!-- Route Controls -->
+            <div class="route-controls" x-data="gpxHandler" x-init="init()">
+              <input
+                type="file"
+                id="gpxFileInput"
+                accept=".gpx"
+                class="hidden"
+              />
+
+              <button @click="triggerImport()" class="btn-success">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  class="icon-md"
+                >
+                  <path
+                    d="M12 2l3 3h-2v6h-2V5H9l3-3zm-8 9h4v2H4v-2zm16 0h-4v2h4v-2zM4 15h16v2H4v-2z"
+                  />
+                </svg>
+                Import GPX
+              </button>
+
+              <button @click="clearRoute()" class="btn-danger">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  class="icon-md"
+                >
+                  <path d="M6 7h12l-1 14H7L6 7zm3-3h6l1 2H8l1-2z" />
+                </svg>
+                Clear
+              </button>
+
+              <button
+                @click="alignToRoads()"
+                :disabled="$store.app.isLoading"
+                class="btn-primary disabled:opacity-50"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  class="icon-md"
+                >
+                  <path d="M4 17l6-6 4 4 6-6v4h2V5h-8v2h4l-6 6-4-4-6 6z" />
+                </svg>
+                Snap to road
+              </button>
+            </div>
+          </div>
+
+          <!-- Right Column: Forms and Stats -->
+          <div class="section-column" x-data="activityForm" x-init="init()">
+            <!-- Activity Details -->
+            <div class="form-group">
+              <h2 class="section-header">
+                <span class="section-icon section-icon-emerald">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
+                    class="icon-md"
+                  >
+                    <path
+                      d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 000-1.41l-2.34-2.34a1 1 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
+                    />
+                  </svg>
+                </span>
+                2. Explain your run in detail
+              </h2>
+
+              <!-- Run Name -->
+              <div>
+                <label for="runName" class="form-label">Name</label>
+                <div class="input-container">
+                  <span class="input-icon">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                      class="icon-md"
+                    >
+                      <path
+                        d="M4 4h16v2H4V4zm0 14h10v2H4v-2zM4 9h16v2H4V9zm0 5h16v2H4v-2z"
+                      />
+                    </svg>
+                  </span>
+                  <input
+                    type="text"
+                    x-model="$store.activity.name"
+                    @input="onFormChange()"
+                    class="form-input-with-icon"
+                  />
+                </div>
+              </div>
+
+              <!-- Description -->
+              <div>
+                <label for="description" class="form-label"
+                  >Description Detail</label
+                >
+                <div class="input-container">
+                  <span class="input-icon-textarea">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                      class="icon-md"
+                    >
+                      <path
+                        d="M4 4h16v2H4V4zm0 4h10v2H4V8zm0 4h16v2H4v-2zm0 4h10v2H4v-2z"
+                      />
+                    </svg>
+                  </span>
+                  <textarea
+                    x-model="$store.activity.description"
+                    @input="onFormChange()"
+                    rows="3"
+                    class="form-textarea"
+                  ></textarea>
+                </div>
+              </div>
+
+              <!-- Date and Time -->
+              <div class="form-grid">
+                <div>
+                  <label class="form-label">Date</label>
+                  <div class="input-container">
+                    <span class="input-icon">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                        class="icon-md"
+                      >
+                        <path
+                          d="M7 2v2H5a2 2 0 00-2 2v2h18V6a2 2 0 00-2-2h-2V2h-2v2H9V2H7zm14 8H3v10a2 2 0 002 2h14a2 2 0 002-2V10z"
+                        />
+                      </svg>
+                    </span>
+                    <input
+                      type="date"
+                      x-model="$store.activity.date"
+                      @change="onFormChange()"
+                      class="form-input-with-icon"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label class="form-label">Start Time</label>
+                  <div class="input-container">
+                    <span class="input-icon">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                        class="icon-md"
+                      >
+                        <path
+                          d="M12 1a11 11 0 100 22 11 11 0 000-22zm1 11V6h-2v7h6v-2h-4z"
+                        />
+                      </svg>
+                    </span>
+                    <input
+                      type="time"
+                      x-model="$store.activity.startTime"
+                      @change="onFormChange()"
+                      class="form-input-with-icon"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Activity Design -->
+            <div class="form-group">
+              <h2 class="section-header">
+                <span class="section-icon section-icon-purple">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    class="icon-md"
+                  >
+                    <path
+                      d="M6 10a2 2 0 100 4h12a2 2 0 100-4H6zm-3 7a2 2 0 100 4h18a2 2 0 100-4H3zM3 3a2 2 0 100 4h18a2 2 0 100-4H3z"
+                    />
+                  </svg>
+                </span>
+                3. Create your activity in a way that works best for you
+              </h2>
+
+              <!-- Activity Type -->
+              <div>
+                <label class="form-label">Activity Type</label>
+                <select
+                  x-model="$store.activity.activityType"
+                  @change="updateActivityType($event.target.value)"
+                  class="form-select"
+                >
+                  <option value="running">🏃‍♂️ Running</option>
+                  <option value="cycling">🚴‍♂️ Cycling</option>
+                  <option value="walking">🚶‍♂️ Walking</option>
+                  <option value="hiking">🥾 Hiking</option>
+                </select>
+              </div>
+
+              <!-- Units and Pace Format -->
+              <div class="form-grid">
+                <div>
+                  <label class="form-label">Units</label>
+                  <select
+                    x-model="$store.activity.units"
+                    @change="updateUnits($event.target.value)"
+                    class="form-select"
+                  >
+                    <option value="km">Kilometers (km)</option>
+                    <option value="mi">Miles (mi)</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="form-label">Pace format</label>
+                  <select
+                    x-model="$store.activity.paceFormat"
+                    @change="updatePaceFormat($event.target.value)"
+                    class="form-select"
+                  >
+                    <option value="min/km">min/km</option>
+                    <option value="min/mi">min/mi</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Pace Settings -->
+              <div class="form-grid">
+                <div>
+                  <label class="form-label">
+                    <span x-text="paceTypeLabel"></span> (<span
+                      x-text="paceFormatLabel"
+                    ></span
+                    >)
+                  </label>
+                  <div class="flex items-center space-x-2">
+                    <input
+                      type="number"
+                      x-model.number="$store.activity.paceMin"
+                      @input="onFormChange()"
+                      class="form-input text-center"
+                    />
+                    <span class="font-bold" x-show="!isCycling">:</span>
+                    <input
+                      type="number"
+                      x-model.number="$store.activity.paceSec"
+                      @input="onFormChange()"
+                      x-show="!isCycling"
+                      class="form-input text-center"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label class="form-label">Distance Unit</label>
+                  <div class="display-unit">
+                    <span
+                      class="display-unit-text"
+                      x-text="currentDistanceUnitLabel"
+                    ></span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Pace Inconsistency -->
+              <div>
+                <label class="range-label">
+                  Pace Inconsistency
+                  <span
+                    class="range-value text-blue-600"
+                    x-text="$store.activity.paceInconsistency"
+                  ></span>
+                </label>
+                <input
+                  x-model.number="$store.activity.paceInconsistency"
+                  @change="onFormChange()"
+                  @input="onFormChange()"
+                  type="range"
+                  min="0"
+                  max="3"
+                  step="1"
+                  class="range"
+                />
+                <div class="range-hints">
+                  <span>Steady</span><span>Realistic</span><span>Moderate</span
+                  ><span>High</span>
+                </div>
+              </div>
+
+              <!-- Heart Rate -->
+              <div>
+                <label class="form-label">Average heart rate (bpm)</label>
+                <input
+                  type="number"
+                  x-model.number="$store.activity.avgHeartRate"
+                  @input="onFormChange()"
+                  class="form-input"
+                />
+              </div>
+
+              <!-- Heart Rate Variability -->
+              <div>
+                <label class="range-label">
+                  Heart Rate Variability
+                  <span
+                    class="range-value text-red-600"
+                    x-text="$store.activity.hrVariability"
+                  ></span>
+                </label>
+                <input
+                  x-model.number="$store.activity.hrVariability"
+                  @change="onFormChange()"
+                  @input="onFormChange()"
+                  type="range"
+                  min="0"
+                  max="2"
+                  step="1"
+                  class="range"
+                />
+                <div class="range-hints">
+                  <span>Minimal</span><span>Moderate</span><span>High</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Stats and Export Section -->
+        <div class="stats-section" x-data="statsDisplay" x-init="init()">
+          <h2 class="stats-header">
+            <span class="section-icon section-icon-amber w-9 h-9">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                class="icon-md"
+              >
+                <path
+                  d="M3 3h2v18H3V3zm4 10h2v8H7v-8zm4-6h2v14h-2V7zm4 4h2v10h-2V11zm4-8h2v18h-2V3z"
+                />
+              </svg>
+            </span>
+            4. Your stats with numbers, charts, and easy export
+          </h2>
+
+          <!-- Stats Grid -->
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-label">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  class="icon-sm"
+                >
+                  <path
+                    d="M6 3a3 3 0 100 6 3 3 0 000-6zm12 6a3 3 0 100-6 3 3 0 000 6zM4 13h8v2H4v-2zm10 0h6v2h-6v-2z"
+                  />
+                </svg>
+                Distance
+              </div>
+              <div
+                class="stat-value"
+                x-text="$store.activity.stats.distance"
+              ></div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  class="icon-sm"
+                >
+                  <path
+                    d="M3 3h2v4H3V3zm16 0h2v10h-2V3zM7 7h2v14H7V7zm8 8h2v6h-2v-6z"
+                  />
+                </svg>
+                Duration
+              </div>
+              <div
+                class="stat-value"
+                x-text="$store.activity.stats.duration"
+              ></div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  class="icon-sm"
+                >
+                  <path d="M3 17l6-6 4 4 7-7 1 1-8 8-4-4-5 5z" />
+                </svg>
+                Elevation Gain
+              </div>
+              <div
+                class="stat-value"
+                x-text="$store.activity.stats.elevation"
+              ></div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  class="icon-sm"
+                >
+                  <path
+                    d="M12 1a11 11 0 100 22 11 11 0 000-22zm1 11V6h-2v7h6v-2h-4z"
+                  />
+                </svg>
+                Pace
+              </div>
+              <div class="stat-value" x-text="$store.activity.stats.pace"></div>
+            </div>
+          </div>
+
+          <!-- Charts -->
+          <div
+            class="charts-container"
+            x-data="chartsComponent"
+            x-init="init()"
+            id="charts-container"
+          >
+            <!-- Pace Chart -->
+            <div class="chart-card" x-show="$store.app.showPaceChart">
+              <div class="chart-header">
+                <h3 class="chart-title">Pace Profile</h3>
+                <button @click="togglePaceChart()" class="chart-toggle">
+                  <span
+                    x-text="$store.app.showPaceChart ? 'Hide' : 'Show'"
+                  ></span>
+                </button>
+              </div>
+              <div class="chart-canvas-container">
+                <canvas id="paceChart" class="chart-canvas"></canvas>
+              </div>
+            </div>
+
+            <!-- Heart Rate Chart -->
+            <div class="chart-card" x-show="$store.app.showHrChart">
+              <div class="chart-header">
+                <h3 class="chart-title">Heart Rate Profile</h3>
+                <button @click="toggleHrChart()" class="chart-toggle">
+                  <span
+                    x-text="$store.app.showHrChart ? 'Hide' : 'Show'"
+                  ></span>
+                </button>
+              </div>
+              <div class="chart-canvas-container">
+                <canvas id="hrChart" class="chart-canvas"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- Export Button -->
+          <div class="export-container" x-data="gpxHandler" x-init="init()">
+            <button
+              @click="generateGPX()"
+              :disabled="$store.app.isLoading"
+              class="btn-export"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                class="icon-lg"
+              >
+                <path
+                  d="M12 3v10.586l3.293-3.293 1.414 1.414L12 17.414l-4.707-4.707 1.414-1.414L12 13.586V3h0zM5 19h14v2H5v-2z"
+                />
+              </svg>
+              <span
+                x-text="$store.app.isLoading ? 'Generating...' : 'Export GPX File (.gpx)'"
+              ></span>
+            </button>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script type="module" src="./index.js"></script>
+  </body>
+</html>

@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  # Development service with Vite dev server
+  app-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - "5173:5173"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+    command: npm run dev
+    profiles:
+      - dev
+
+  # Production service with built static files
+  app-prod:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    ports:
+      - "80:80"
+    environment:
+      - NODE_ENV=production
+    profiles:
+      - prod
+
+  # Alternative: Simple Node.js service for preview
+  app-preview:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - "4173:4173"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=production
+    command: sh -c "npm run build && npm run preview"
+    profiles:
+      - preview
